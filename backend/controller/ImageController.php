@@ -1,20 +1,19 @@
 <?php
 
-use model\Image;
+include('model\Image.php');
 
-class ImageController {
+class ImageController
+{
 
     private $db;
-    private $imageId;
     private $requestMethod;
 
     private $image;
 
-    public function __construct($db, $requestMethod,$imageId)
+    public function __construct($db, $requestMethod)
     {
         $this->db = $db;
         $this->requestMethod = $requestMethod;
-        $this->imageId = $imageId;
 
         $this->image = new Image($db);
     }
@@ -23,7 +22,7 @@ class ImageController {
     {
         switch ($this->requestMethod) {
             case 'GET':
-                $response = $this->getImage($imageId);
+                $response = $this->getImages();
                 break;
             default:
                 $response = $this->notFoundResponse();
@@ -35,9 +34,9 @@ class ImageController {
         }
     }
 
-    private function getImage($id)
+    private function getImages()
     {
-        $result = $this->image->find($id);
+        $result = $this->image->findAll();
         if (!$result) {
             return $this->notFoundResponse();
         }
