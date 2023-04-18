@@ -1,21 +1,21 @@
 <?php
 
-use model\Comment;
-use model\Image;
+include('model\Comment.php');
 
-class CommentController {
-    
+class CommentController
+{
+
     private $db;
     private $requestMethod;
-    private $commentId;
+    private $uri;
 
     private $comment;
 
-    public function __construct($db, $requestMethod, $commentId)
+    public function __construct($db, $requestMethod)
     {
         $this->db = $db;
         $this->requestMethod = $requestMethod;
-        $this->commentId = $commentId;
+        $this->uri = explode('/', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
 
         $this->comment = new Comment($db);
     }
@@ -23,14 +23,15 @@ class CommentController {
     public function processRequest()
     {
         switch ($this->requestMethod) {
-            case 'GET':
-                $response = $this->getCommentByImageId($imageId);
-                break;
             case 'POST':
                 $response = $this->createComment();
                 break;
             case 'DELETE':
-                $response = $this->deleteComment($this->commentId);
+                if (!isset($uri[2])) {
+                    $response = $this->notFoundResponse();
+                    break;
+                }
+                $response = $this->deleteComment();
                 break;
             default:
                 $response = $this->notFoundResponse();
@@ -42,22 +43,11 @@ class CommentController {
         }
     }
 
-    private function getCommentByImageId($id)
-    {
-        $result = $this->comment->findByImageId($id);
-        if (!$result) {
-            return $this->notFoundResponse();
-        }
-        $response['status_code_header'] = 'HTTP/1.1 200 OK';
-        $response['body'] = json_encode($result);
-        return $response;
-    }
-
     private function createComment()
     {
         $input = (array) json_decode(file_get_contents('php//input'), TRUE);
-        if (! $this->validateComment($input)) {
-            return $this.unprocessableEntityResponse();
+        if (!$this->validateComment($input)) {
+            return $this->unprocessableEntityResponse();
         }
         $this->comment->insert($input);
         $response['status_code_header'] = 'HTTP/1.1 201 Created';
@@ -65,13 +55,10 @@ class CommentController {
         return $response;
     }
 
-    private function deleteComment($id)
+    private function deleteComment()
     {
-        $result = $this->comment->find($id);
-        if (! $result){
-            return $this->notFoundResponse();
-        }
-        $this->comment->delete($id);
+        $commentId = (int) $this->uri[2];
+        $this->comment->delete($commentId);
         $response['status_code_header'] = 'HTTP/1.1 200 OK';
         $response['body'] = null;
         return $response;
@@ -79,10 +66,10 @@ class CommentController {
 
     private function validateComment($input)
     {
-        if (! isset($input['user'])) {
+        if (!isset($input['user'])) {
             return false;
         }
-        if (! isset($input['text_comment'])) {
+        if (!isset($input['text_comment'])) {
             return false;
         }
         return true;
