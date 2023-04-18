@@ -1,6 +1,7 @@
 <?php
 
 class DatabaseConnector {
+
     private $dbConnection = null;
 
     public function __construct() 
@@ -19,7 +20,8 @@ class DatabaseConnector {
         }
     }
 
-    public function getConnection() {
+    public function getConnection() 
+    {
         return $this->dbConnection;
     }
 }
